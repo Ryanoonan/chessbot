@@ -14,6 +14,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 STOCKFISH_PATH = os.getenv('STOCKFISH_PATH')
+if STOCKFISH_PATH is None:
+    STOCKFISH_PATH = "/opt/homebrew/Cellar/stockfish/17/bin/stockfish"
+
 class ChessDataset(Dataset):
     """Dataset of chess positions and their evaluations."""
 
