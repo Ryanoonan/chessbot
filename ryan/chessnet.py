@@ -13,9 +13,10 @@ class ChessNet(nn.Module):
         super(ChessNet, self).__init__()
         # Fully connected layers
         self.relu = nn.ReLU()
-        self.fc1 = nn.Linear(12*64, 128)
-        self.fc2 = nn.Linear(128, 64)
-        self.fc3 = nn.Linear(64, 1)  # Output: single evaluation score
+        self.fc1 = nn.Linear(12*64, 256)
+        self.fc2 = nn.Linear(256, 128)
+        self.fc3 = nn.Linear(128, 64)
+        self.fc4 = nn.Linear(64, 1)  # Output: single evaluation score
 
 
 
@@ -26,7 +27,8 @@ class ChessNet(nn.Module):
         x = x.view(-1,self.fc1.in_features)  # Flatten the input tensor to shape (batch_size, 64)
         x = self.relu(self.fc1(x))
         x = self.relu(self.fc2(x))
-        x = self.fc3(x)
+        x = self.relu(self.fc3(x))
+        x = self.fc4(x)
 
         return x
 

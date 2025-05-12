@@ -86,8 +86,8 @@ def main():
     #load dataset from lichess_dataset.pkl
 
     # Use this to filter the dataset
-    # dataset = ChessDataset.load_from_file("lichess_dataset.pkl")
-    # dataset.filter_noisy_positions(max_positions = 100000)
+    # dataset = ChessDataset.load_from_file("lichess_dataset_1M.pkl")
+    # dataset.filter_noisy_positions(max_positions = 1000000)
     # dataset.save_to_file("filtered_lichess_dataset.pkl")
 
     dataset = ChessDataset.load_from_file("filtered_lichess_dataset.pkl")
@@ -101,8 +101,8 @@ def main():
     )
 
     # Create data loaders
-    train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=32)
+    train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=64)
 
     # Initialize model
     model = ChessNet()
