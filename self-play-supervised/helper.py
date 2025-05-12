@@ -169,11 +169,9 @@ def minimax_search(
     board: chess.Board,
     depth: int,
     model,
-    alpha: float = float("-inf"),
-    beta: float = float("inf"),
     maximizing_player: bool = True,
 ) -> tuple[float, chess.Move | None]:
-    """Minimax search with alpha-beta pruning using neural network evaluation."""
+    """Vanilla minimax search using neural network evaluation."""
 
     if depth == 0 or board.is_game_over():
         return model(board_to_tensor(board)), None
@@ -184,16 +182,12 @@ def minimax_search(
 
         for move in board.legal_moves:
             board.push(move)
-            eval, _ = minimax_search(board, depth - 1, model, alpha, beta, False)
+            eval, _ = minimax_search(board, depth - 1, model, False)
             board.pop()
 
             if eval > max_eval:
                 max_eval = eval
                 best_move = move
-
-            alpha = max(alpha, eval)
-            if beta <= alpha:
-                break
 
         return max_eval, best_move
     else:
@@ -202,16 +196,12 @@ def minimax_search(
 
         for move in board.legal_moves:
             board.push(move)
-            eval, _ = minimax_search(board, depth - 1, model, alpha, beta, True)
+            eval, _ = minimax_search(board, depth - 1, model, True)
             board.pop()
 
             if eval < min_eval:
                 min_eval = eval
                 best_move = move
-
-            beta = min(beta, eval)
-            if beta <= alpha:
-                break
 
         return min_eval, best_move
 
