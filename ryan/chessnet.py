@@ -52,6 +52,15 @@ def board_to_tensor(board: chess.Board) -> torch.Tensor:
         chess.QUEEN: 4,
         chess.KING: 5
     }
+
+    piece_values = {
+        chess.PAWN: 1,
+        chess.KNIGHT: 3,
+        chess.BISHOP: 3,
+        chess.ROOK: 5,
+        chess.QUEEN: 9,
+        chess.KING: 1
+    }
     
     # Fill tensor with piece locations
     for square in chess.SQUARES:
@@ -69,7 +78,7 @@ def board_to_tensor(board: chess.Board) -> torch.Tensor:
             # Set value to 1 at the piece's position
             rank = chess.square_rank(square)
             file = chess.square_file(square)
-            tensor[plane_idx, rank, file] = 1.0
+            tensor[plane_idx, rank, file] = piece_values[piece_type] * (1 if piece.color == chess.WHITE else -1)
     
     return tensor
 
