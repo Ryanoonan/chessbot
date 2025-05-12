@@ -10,6 +10,9 @@ import random
 from tqdm import tqdm
 import os
 from dotenv import load_dotenv
+import pickle
+
+from generate_chess_dataset import ChessDataset
 
 load_dotenv()
 
@@ -17,56 +20,6 @@ STOCKFISH_PATH = os.getenv('STOCKFISH_PATH')
 if STOCKFISH_PATH is None:
     STOCKFISH_PATH = "/opt/homebrew/Cellar/stockfish/17/bin/stockfish"
 
-class ChessDataset(Dataset):
-    """Dataset of chess positions and their evaluations."""
-
-    def __init__(self, num_positions=10000):  # Changed from 10000 to 100
-        self.positions = []
-        self.evaluations = []
-        self.engine = chess.engine.SimpleEngine.popen_uci(
-            STOCKFISH_PATH
-        )
-
-        # Generate random positions
-        for _ in tqdm(range(num_positions), desc="Generating positions"):
-            board = self._generate_random_position()
-            evaluation = self._get_stockfish_evaluation(board)
-            self.positions.append(board)
-            self.evaluations.append(evaluation)
-
-        self.engine.quit()
-
-    def _generate_random_position(self) -> chess.Board:
-        """Generate a random chess position."""
-        board = chess.Board()
-        num_moves = random.randint(0, 30)  # Random number of moves
-
-        for _ in range(num_moves):
-            legal_moves = list(board.legal_moves)
-            if not legal_moves:
-                break
-            move = random.choice(legal_moves)
-            board.push(move)
-        
-        return board
-
-    def _get_stockfish_evaluation(self, board: chess.Board) -> float:
-        """Get Stockfish evaluation for a position."""
-        result = self.engine.analyse(board, chess.engine.Limit(time=0.3))
-        score = result["score"].white().score(mate_score=10000)
-        return score / 100.0  # Convert to centipawns
-
-    def __len__(self):
-        return len(self.positions)
-
-    def __getitem__(self, idx):
-        board = self.positions[idx]
-        evaluation = self.evaluations[idx]
-
-        # Convert board to tensor
-        tensor = board_to_tensor(board)
-
-        return tensor, torch.tensor([evaluation], dtype=torch.float32)
 
 
 def train_model(
@@ -129,7 +82,16 @@ def train_model(
 
 def main():
     # Create dataset
-    dataset = ChessDataset(num_positions=10)  # Changed from 1000 to 100
+    dataset = ChessDataset()
+    #load dataset from lichess_dataset.pkl
+
+    # Use this to filter the dataset
+    # dataset = ChessDataset.load_from_file("lichess_dataset.pkl")
+    # dataset.filter_noisy_positions(max_positions = 100000)
+    # dataset.save_to_file("filtered_lichess_dataset.pkl")
+
+    dataset = ChessDataset.load_from_file("filtered_lichess_dataset.pkl")
+    print(f"Loaded dataset with {len(dataset)} positions.")
 
     # Split into train and validation
     train_size = int(0.8 * len(dataset))

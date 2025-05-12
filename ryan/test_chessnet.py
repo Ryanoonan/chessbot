@@ -282,7 +282,7 @@ def giraffe_vs_stockfish(num_games=5, model_path=MODEL_PATH):
     engine = chess.engine.SimpleEngine.popen_uci(
         "/opt/homebrew/Cellar/stockfish/17/bin/stockfish"
     )
-    engine.configure({"Skill Level": 5})  # Adjust Stockfish skill level as desired
+    engine.configure({"Skill Level": 0})  # Adjust Stockfish skill level as desired
 
     results = {"giraffe_wins": 0, "stockfish_wins": 0, "draws": 0}
     game = ChessGame()  # For visualization
@@ -295,7 +295,6 @@ def giraffe_vs_stockfish(num_games=5, model_path=MODEL_PATH):
         board = chess.Board()
         current_eval = evaluator.evaluate_position(board)
         game.draw_board(board, current_eval)
-        
         # Allow user to see initial position
         pygame.time.wait(1000)
         
@@ -305,9 +304,9 @@ def giraffe_vs_stockfish(num_games=5, model_path=MODEL_PATH):
                 pygame.quit()
                 engine.quit()
                 return
-
         move_count = 0
         while not board.is_game_over():
+
             # Process any window events to keep responsive
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -319,7 +318,7 @@ def giraffe_vs_stockfish(num_games=5, model_path=MODEL_PATH):
             
             # Giraffe's turn (White)
             print(f"Move {move_count}: Giraffe (White) is thinking...")
-            move = get_best_move(board, depth=2, evaluator=evaluator)
+            move = get_best_move(board, depth=3, evaluator=evaluator)
             board.push(move)
             current_eval = evaluator.evaluate_position(board)
             print(f"Giraffe played: {move}")
@@ -411,7 +410,6 @@ def model_vs_model(num_games=5, model1_path=MODEL_PATH, model2_path=MODEL_PATH):
         
         # Allow user to see initial position
         pygame.time.wait(1000)
-        
         # Check for window close between games
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
