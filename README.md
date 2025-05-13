@@ -7,8 +7,7 @@ Install stockfish '''brew install stockfish'''
 Create a file at the top of the repo named .env, and put your path in it
 STOCKFISH_PATH=""
 
-Run python train_chessnet_stockfish.py
-Pip install all the things you need to install (Sorry i didnt make a requirements.txt)
+Run python train_chessnet_stockfish.py (You may need to install additional requirements)
 
 Then run python test_chessnet.py --model {model name here} 
 By default it will run MODEL_PATH in test_chessnet.py
