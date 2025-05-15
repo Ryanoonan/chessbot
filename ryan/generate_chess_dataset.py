@@ -31,14 +31,14 @@ class ChessDataset(Dataset):
         new_evaluations = []
         count = 0
         nb_quiet = 0
-        for board in self.positions:
+        for i, board in enumerate(self.positions):
             count += 1
             if count % 1000 == 0:
                 # Print every 1000th position
                 print(f"Filtering position number {count}, \n number of quiet positions: {nb_quiet} \n\n")
             if is_quiet(board):
                 new_positions.append(board)
-                new_evaluations.append(self.evaluations[self.positions.index(board)])
+                new_evaluations.append(self.evaluations[i])
                 nb_quiet += 1
             if count >= max_positions:
                 break

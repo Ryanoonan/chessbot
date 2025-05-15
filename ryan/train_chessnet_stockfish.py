@@ -30,10 +30,17 @@ def train_model(
     learning_rate: float = 0.001,
 ):
     """Train the chess evaluation model."""
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # Check for M1/M2 Mac support first, then CUDA, then fall back to CPU
+    if torch.backends.mps.is_available():
+        device = torch.device("mps")
+    elif torch.cuda.is_available():
+        device = torch.device("cuda")
+    else:
+        device = torch.device("cpu")
+    print(f"Using device: {device}")
     model = model.to(device)
 
-    criterion = nn.MSELoss()
+    criterion = torch.nn.SmoothL1Loss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
     best_val_loss = float("inf")
@@ -49,12 +56,12 @@ def train_model(
 
             optimizer.zero_grad()
             outputs = model(inputs)
+
             loss = criterion(outputs, targets)
             loss.backward()
             optimizer.step()
 
             train_loss += loss.item()
-
         train_loss /= len(train_loader)
 
         # Validation
@@ -87,12 +94,17 @@ def main():
 
     # Use this to filter the dataset
     # dataset = ChessDataset.load_from_file("lichess_dataset.pkl")
-    # dataset.filter_noisy_positions(max_positions = 100000)
-    # dataset.save_to_file("filtered_lichess_dataset.pkl")
+    # dataset.filter_noisy_positions(max_positions = 10000000)
+    # dataset.save_to_file("filtered_lichess_dataset_100k_may15.pkl")
 
-    dataset = ChessDataset.load_from_file("filtered_lichess_dataset.pkl")
+
+    dataset = ChessDataset.load_from_file("filtered_lichess_dataset_100k_may15.pkl")
+    
+
+    max_positions = 20000
+    dataset.positions = dataset.positions[:max_positions]
+    dataset.evaluations = dataset.evaluations[:max_positions]
     print(f"Loaded dataset with {len(dataset)} positions.")
-
     # Split into train and validation
     train_size = int(0.8 * len(dataset))
     val_size = len(dataset) - train_size

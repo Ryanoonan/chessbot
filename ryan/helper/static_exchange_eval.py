@@ -48,7 +48,7 @@ def is_quiet(board: chess.Board, threshold: int = 0) -> bool:
     no checks, and no promotions—i.e. a “quiet” position.
     """
     for move in board.legal_moves:
-        if board.is_capture(move) and simple_see(board, move) <= threshold:
+        if board.is_capture(move) and simple_see(board, move) >= threshold:
             return False
         if board.gives_check(move) or move.promotion is not None:
             return False

@@ -23,7 +23,8 @@ class ChessNet(nn.Module):
 
     def forward(self, x):
         
-        x = x.view(-1,self.fc1.in_features)  # Flatten the input tensor to shape (batch_size, 64)
+        # Flatten the input tensor
+        x = x.view(x.size(0), -1)  # Reshape to (batch_size, 12*64)
         x = self.relu(self.fc1(x))
         x = self.relu(self.fc2(x))
         x = self.fc3(x)
@@ -78,7 +79,8 @@ def board_to_tensor(board: chess.Board) -> torch.Tensor:
             # Set value to 1 at the piece's position
             rank = chess.square_rank(square)
             file = chess.square_file(square)
-            tensor[plane_idx, rank, file] = piece_values[piece_type] * (1 if piece.color == chess.WHITE else -1)
+            tensor[plane_idx, rank, file] = 1.0
+
     
     return tensor
 
