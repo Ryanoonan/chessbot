@@ -4,7 +4,7 @@ from torch.utils.data import Dataset, DataLoader
 import chess
 import chess.engine
 import numpy as np
-from chessnet import board_to_tensor
+from helper.board_to_tensor import board_to_tensor_1
 import random
 from tqdm import tqdm
 import os
@@ -239,7 +239,7 @@ class ChessDataset(Dataset):
         evaluation = self.evaluations[idx]
 
         # Convert board to tensor
-        tensor = board_to_tensor(board)
+        tensor = board_to_tensor_1(board)
 
         return tensor, torch.tensor([evaluation], dtype=torch.float32)
     

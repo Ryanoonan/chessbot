@@ -5,7 +5,7 @@ from torch.utils.data import Dataset, DataLoader
 import chess
 import chess.engine
 import numpy as np
-from chessnet import ChessNet, board_to_tensor
+from chessnet import ChessNet
 import random
 from tqdm import tqdm
 import os
@@ -99,7 +99,6 @@ def main():
 
 
     dataset = ChessDataset.load_from_file("filtered_lichess_dataset_1M_may15.pkl")
-    
 
     max_positions = 20000
     dataset.positions = dataset.positions[:max_positions]
