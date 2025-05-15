@@ -98,7 +98,7 @@ def main():
     # dataset.save_to_file("filtered_lichess_dataset_100k_may15.pkl")
 
 
-    dataset = ChessDataset.load_from_file("filtered_lichess_dataset_100k_may15.pkl")
+    dataset = ChessDataset.load_from_file("filtered_lichess_dataset_1M_may15.pkl")
     
 
     max_positions = 20000
