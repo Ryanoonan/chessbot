@@ -175,3 +175,7 @@ cython_debug/
 
 # .pth models
 *.pth
+
+# csv, and pkl files
+*.csv
+*.pkl
