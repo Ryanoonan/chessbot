@@ -5,6 +5,8 @@ import numpy as np
 import chess
 from typing import Tuple, Optional
 
+from helper.board_to_tensor import board_to_tensor_nnue
+
 
 class ChessNet(nn.Module):
     """Neural network for chess position evaluation, similar to Giraffe."""
@@ -24,8 +26,15 @@ class ChessNet(nn.Module):
     def forward(self, x):
         # Flatten the input tensor
         # split x into two tensors: x1 and x2
-        x1 = x[:, :, :, :, 0]  # White perspective
-        x2 = x[:, :, :, :, 1]
+        # Handle both single inputs (inference) and batched inputs (training)
+        if x.dim() == 5:  # Batched input: [batch, channels, height, width, perspective]
+            x1 = x[:, :, :, :, 0]  # White perspective
+            x2 = x[:, :, :, :, 1]  # Black perspective
+        elif x.dim() == 4:  # Single input: [channels, height, width, perspective]
+            x1 = x[:, :, :, 0].unsqueeze(0)  # Add batch dimension
+            x2 = x[:, :, :, 1].unsqueeze(0)  # Add batch dimension
+        else:
+            raise ValueError(f"Unexpected tensor shape with {x.dim()} dimensions")
 
         # Reshape to (batch_size, 8*8*10)
         x1 = x1.reshape(x1.size(0), -1)  # Reshape to (batch_size, 8*8*10)
@@ -70,7 +79,7 @@ class GiraffeEvaluator:
         """
         # Convert board to tensor (now already has channel dimension)
 
-        tensor = board_to_tensor(board)
+        tensor = board_to_tensor_nnue(board)
 
         # Add batch dimension (but not channel dimension)
         with torch.no_grad():

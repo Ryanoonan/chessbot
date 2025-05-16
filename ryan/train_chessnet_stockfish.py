@@ -100,7 +100,7 @@ def main():
 
     dataset = ChessDataset.load_from_file("lichess_dataset_2M_unique_no_mate.pkl")
 
-    max_positions = 20000
+    max_positions = 2000000
     dataset.positions = dataset.positions[:max_positions]
     dataset.evaluations = dataset.evaluations[:max_positions]
     print(f"Loaded dataset with {len(dataset)} positions.")
