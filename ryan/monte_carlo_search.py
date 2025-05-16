@@ -4,7 +4,7 @@ import chess
 from typing import Tuple, Optional, List
 import math
 from chessnet import GiraffeEvaluator
-
+#
 class MCTSNode:
     def __init__(self, board: chess.Board, parent: Optional["MCTSNode"] = None, move: Optional[chess.Move] = None):
         self.board = board
