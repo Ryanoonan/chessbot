@@ -53,3 +53,39 @@ def board_to_tensor_1(board: chess.Board) -> torch.Tensor:
 
     
     return tensor
+
+
+def board_to_tensor_nnue(board: chess.Board) -> torch.Tensor:
+    piece_type_to_plane = {
+        chess.PAWN:   0,
+        chess.KNIGHT: 1,
+        chess.BISHOP: 2,
+        chess.ROOK:   3,
+        chess.QUEEN:  4,
+    }
+    # dims: [king_square, piece_square, plane (0–9), perspective (0=white,1=black)]
+    X = torch.zeros(64, 64, 10, 2, dtype=torch.float32)
+
+    # Gather king squares by color
+    white_king_sq = [sq for sq in chess.SQUARES
+                     if (p := board.piece_at(sq)) and p.piece_type == chess.KING and p.color == chess.WHITE]
+    black_king_sq = [sq for sq in chess.SQUARES
+                     if (p := board.piece_at(sq)) and p.piece_type == chess.KING and p.color == chess.BLACK]
+
+    # For each king perspective
+    for perspective, king_list in enumerate((white_king_sq, black_king_sq)):
+        # perspective 0 = white-king view; 1 = black-king view
+        for king_sq in king_list:
+            # For each piece on the board
+            for piece_sq in chess.SQUARES:
+                if (bp := board.piece_at(piece_sq)) is None:
+                    continue
+                # Skip if piece is a king (exclude kings from piece_square dimension)
+                if bp.piece_type == chess.KING:
+                    continue
+                base_plane = piece_type_to_plane[bp.piece_type]
+                color_offset = 0 if bp.color == chess.WHITE else 5
+                plane = base_plane + color_offset
+                X[king_sq, piece_sq, plane, perspective] = 1.0
+
+    return X

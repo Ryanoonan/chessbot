@@ -4,7 +4,7 @@ from torch.utils.data import Dataset, DataLoader
 import chess
 import chess.engine
 import numpy as np
-from helper.board_to_tensor import board_to_tensor_1
+from helper.board_to_tensor import board_to_tensor_1, board_to_tensor_nnue
 import random
 from tqdm import tqdm
 import os
@@ -239,7 +239,7 @@ class ChessDataset(Dataset):
         evaluation = self.evaluations[idx]
 
         # Convert board to tensor
-        tensor = board_to_tensor_1(board)
+        tensor = board_to_tensor_nnue(board)
 
         return tensor, torch.tensor([evaluation], dtype=torch.float32)
     
@@ -259,7 +259,7 @@ class ChessDataset(Dataset):
         Returns two 1D Tensors of length C: (means, stds) where C is the number of channels in the board-tensor.
         """
         # Import board_to_tensor
-        from chessnet import board_to_tensor
+        from helper.board_to_tensor import board_to_tensor_1
         
         # Take a sample board to determine number of channels
         if not self.positions:
@@ -269,7 +269,7 @@ class ChessDataset(Dataset):
         print("Computing channel statistics...")
         
         sample_board = self.positions[0]
-        sample_tensor = board_to_tensor(sample_board)
+        sample_tensor = board_to_tensor_1(sample_board)
         num_channels = sample_tensor.shape[0]
         
         # Initialize accumulators
@@ -279,7 +279,7 @@ class ChessDataset(Dataset):
         
         # Process each board
         for board in tqdm(self.positions, desc="Computing channel statistics"):
-            tensor = board_to_tensor(board)  # This returns [C, 8, 8]
+            tensor = board_to_tensor_nnue(board)  # This returns [C, 8, 8]
             
             # Accumulate statistics
             cnt += 64  # 8x8 board
@@ -325,6 +325,8 @@ def main():
     parser.add_argument('--num-positions', type=int, default=1000,
                         help='Number of positions to generate or load')
     
+    parser.add_argument("--with-stats", type = bool, default = False)
+    
     # Stockfish-specific arguments
     parser.add_argument('--stockfish-path', type=str, default=STOCKFISH_PATH,
                         help='Path to Stockfish engine executable')
@@ -360,7 +362,10 @@ def main():
         print(f"Loaded Lichess dataset with {len(dataset)} positions")
     
     # Save the dataset with channel statistics
-    dataset.save_with_stats(args.output, args.stats_output)
+    if args.with_stats:
+        dataset.save_with_stats(args.output, args.stats_output)
+    else: 
+        dataset.save(args.output)
     print(f"Dataset saved to {args.output} and channel statistics saved to {args.stats_output}")
 
 

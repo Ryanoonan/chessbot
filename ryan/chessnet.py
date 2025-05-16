@@ -13,18 +13,39 @@ class ChessNet(nn.Module):
         super(ChessNet, self).__init__()
         # Fully connected layers
         self.relu = nn.ReLU()
-        self.fc1 = nn.Linear(12*64, 128)
-        self.fc2 = nn.Linear(128, 64)
-        self.fc3 = nn.Linear(64, 1)  # Output: single evaluation score
+        self.fc1w = nn.Linear(64*64*10, 256)
+        self.fc1b = nn.Linear(64*64*10, 256)
+        self.fc2 = nn.Linear(512, 32)
+        self.fc3 = nn.Linear(32, 32)  # Output: single evaluation score
+        self.fc4 = nn.Linear(32, 1)  # Output: single evaluation score
 
 
 
     def forward(self, x):
         # Flatten the input tensor
-        x = x.view(x.size(0), -1)  # Reshape to (batch_size, 12*64)
-        x = self.relu(self.fc1(x))
-        x = self.relu(self.fc2(x))
+        # split x into two tensors: x1 and x2
+        x1 = x[:, :, :, :, 0]  # White perspective
+        x2 = x[:, :, :, :, 1]
+
+        # Reshape to (batch_size, 8*8*10)
+        x1 = x1.reshape(x1.size(0), -1)  # Reshape to (batch_size, 8*8*10)
+        x2 = x2.reshape(x2.size(0), -1)  # Reshape to (batch_size, 8*8*10)
+
+        # Pass through the first layer
+        x1 = self.fc1w(x1)
+        x2 = self.fc1b(x2)
+
+        # Concatenate the outputs
+        x = torch.cat((x1, x2), dim=1)  # Concatenate along the feature dimension
+        x = self.relu(x)
+
+        # Pass through the second and third layers
+        x = self.fc2(x)
+        x = self.relu(x)
+
         x = self.fc3(x)
+        x = self.relu(x)
+        x = self.fc4(x)  # Output: single evaluation score
 
         return x
 
