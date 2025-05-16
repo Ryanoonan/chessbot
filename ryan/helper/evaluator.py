@@ -1,6 +1,8 @@
 import chess
+import torch
 
 from helper.see import static_exchange_evaluation
+from helper.fast_eval_pos import FastChessEvaluatePosition
 
 
 class Evaluator: 
@@ -31,6 +33,14 @@ class MinimaxAlphaBetaEvaluator(Evaluator):
         alpha: float = float("-inf"),
         beta: float = float("inf")
     ) -> tuple[float, chess.Move | None]:
+        
+        moves = list(board.legal_moves)
+        # Simple move ordering: prioritize captures and promotions
+        moves.sort(key=lambda move: (
+        (1000 if board.is_capture(move) else 0) + 
+        (1500 if move.promotion else 0) +
+        (800 if board.gives_check(move) else 0)
+        ), reverse=True)
 
         if depth == 0 or board.is_game_over():
             return self.quiescence_search(board, alpha, beta, maximizing_player), None
@@ -77,7 +87,9 @@ class MinimaxAlphaBetaEvaluator(Evaluator):
     board: chess.Board,
     alpha: float,
     beta: float,
-    maximizing_player: bool
+    maximizing_player: bool,
+    depth: int = 0,
+    max_depth: int = 4
 ) -> float:
         # 1) Stand‐pat
         stand_pat = self.evaluate_position(board)
@@ -103,7 +115,8 @@ class MinimaxAlphaBetaEvaluator(Evaluator):
             score = self.quiescence_search(
                 board,
                 alpha, beta,
-                not maximizing_player
+                not maximizing_player,
+                depth=depth + 1,
             )
             board.pop()
 
@@ -139,13 +152,20 @@ class MaterialMinimax(MinimaxAlphaBetaEvaluator):
         return material_score
     
 class NeuralNetworkEvaluator(MinimaxAlphaBetaEvaluator):
-    def __init__(self, model, board_to_tensor, depth):
+    def __init__(self, model, board_to_tensor, depth=3):
         super().__init__(depth)
-        self.board_to_tensor = board_to_tensor
         self.model = model
+        self.model.eval()  # Set model to evaluation mode
+        self.board_to_tensor = board_to_tensor
+
+    def get_best_move(self, board):
+        # No need to rebuild accumulator - using direct forward pass
+        return super().get_best_move(board)
 
     def evaluate_position(self, board):
-        # Use the neural network to evaluate the position
-        tensor = self.board_to_tensor(board)
-        evaluation = self.model(tensor)
-        return evaluation.item()
+        # Use the model directly with the board_to_tensor function
+        with torch.no_grad():  # No need to track gradients for inference
+            tensor = self.board_to_tensor(board)
+            tensor = tensor.unsqueeze(0) if tensor.dim() == 4 else tensor  # Add batch dimension if needed
+            evaluation = self.model(tensor)
+            return evaluation.item()  # Convert from tensor to scalar

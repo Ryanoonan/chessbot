@@ -36,9 +36,8 @@ class ChessNet(nn.Module):
         else:
             raise ValueError(f"Unexpected tensor shape with {x.dim()} dimensions")
 
-        # Reshape to (batch_size, 8*8*10)
-        x1 = x1.reshape(x1.size(0), -1)  # Reshape to (batch_size, 8*8*10)
-        x2 = x2.reshape(x2.size(0), -1)  # Reshape to (batch_size, 8*8*10)
+        x1 = x1.reshape(x1.size(0), -1)  
+        x2 = x2.reshape(x2.size(0), -1) 
 
         # Pass through the first layer
         x1 = self.fc1w(x1)
