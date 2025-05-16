@@ -104,7 +104,8 @@ def model_vs_stockfish(num_games=5, model_path=MODEL_PATH, evaluator=None):
                 
             # Stockfish's turn (Black)
             print(f"Move {move_count}: Stockfish (Black) is thinking...")
-            result = engine.play(board, chess.engine.Limit(time=0.1))
+            limit = chess.engine.Limit(depth=1)
+            result = engine.play(board, limit)
             board.push(result.move)
             current_eval = evaluator.evaluate_position(board)
             print(f"Stockfish played: {result.move}")

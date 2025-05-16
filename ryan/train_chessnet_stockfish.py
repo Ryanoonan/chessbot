@@ -100,12 +100,12 @@ def main():
 
     dataset = ChessDataset.load_from_file("lichess_dataset_2M_unique_no_mate.pkl")
 
-    max_positions = 2000000
+    max_positions = 200000
     dataset.positions = dataset.positions[:max_positions]
     dataset.evaluations = dataset.evaluations[:max_positions]
     print(f"Loaded dataset with {len(dataset)} positions.")
     # Split into train and validation
-    train_size = int(0.8 * len(dataset))
+    train_size = int(0.95 * len(dataset))
     val_size = len(dataset) - train_size
     train_dataset, val_dataset = torch.utils.data.random_split(
         dataset, [train_size, val_size]
