@@ -1,7 +1,7 @@
 # chessbot
 CS4701 Project
 
-How to use: 
+# How to use:  
 Install stockfish '''brew install stockfish'''
 
 cd to one of the model folders. You must download your data, and use the generate_dataset provided functions. Then run python train_chessnet_stockfish.py (You may need to install additional requirements)
