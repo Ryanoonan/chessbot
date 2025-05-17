@@ -7,7 +7,7 @@ from typing import Optional, Tuple
 import torch
 import argparse
 from chess_game import ChessGame
-from helper.evaluator import MaterialMinimax, NeuralNetworkEvaluator
+from helper.evaluator import HybridMaterialNeural, MaterialMinimax, NeuralNetworkEvaluator
 from helper.board_to_tensor import board_to_tensor_nnue
 
 # Add the current directory to the Python path
@@ -41,7 +41,7 @@ def model_vs_stockfish(num_games=5, model_path=MODEL_PATH, evaluator=None):
         model = ChessNet()
         model.load_state_dict(torch.load(model_path))
         model.eval()
-        evaluator = NeuralNetworkEvaluator(model, depth = 3, board_to_tensor = board_to_tensor_nnue)
+        evaluator = HybridMaterialNeural(model, depth = 5, board_to_tensor = board_to_tensor_nnue)
     engine = chess.engine.SimpleEngine.popen_uci(
         "/opt/homebrew/Cellar/stockfish/17/bin/stockfish"
     )

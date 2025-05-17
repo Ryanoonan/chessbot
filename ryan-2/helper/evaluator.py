@@ -14,10 +14,10 @@ class MinimaxAlphaBetaEvaluator(Evaluator):
     def __init__(self, depth=3):
         self.depth = depth
 
-    def get_best_move(self, board):
+    def get_best_moves(self, board):
         # Perform minimax search with alpha-beta pruning
-        _ , best_move = self.minimax_search(board, alpha=float("-inf"), depth = self.depth, beta=float("inf"))
-        return best_move
+        _ , best_moves = self.minimax_search(board, alpha=float("-inf"), depth = self.depth, beta=float("inf"))
+        return best_moves
         
 
     def evaluate_position(self, board):
@@ -32,7 +32,7 @@ class MinimaxAlphaBetaEvaluator(Evaluator):
         maximizing_player: bool = True,
         alpha: float = float("-inf"),
         beta: float = float("inf")
-    ) -> tuple[float, chess.Move | None]:
+    ) -> tuple[float, list[chess.Move]]:
         
         moves = list(board.legal_moves)
         # Simple move ordering: prioritize captures and promotions
@@ -43,44 +43,48 @@ class MinimaxAlphaBetaEvaluator(Evaluator):
         ), reverse=True)
 
         if depth == 0 or board.is_game_over():
-            return self.quiescence_search(board, alpha, beta, maximizing_player), None
+            return self.quiescence_search(board, alpha, beta, maximizing_player), []
 
         if maximizing_player:
             max_eval = float("-inf")
-            best_move = None
+            best_moves = []
 
-            for move in board.legal_moves:
+            for move in moves:
                 board.push(move)
                 eval, _ = self.minimax_search(board, depth - 1, False, alpha, beta)
                 board.pop()
 
                 if eval > max_eval:
                     max_eval = eval
-                    best_move = move
+                    best_moves = [move]
+                elif eval == max_eval:
+                    best_moves.append(move)
                 
                 alpha = max(alpha, max_eval)
                 if beta <= alpha:
                     break  # Beta cutoff
 
-            return max_eval, best_move
+            return max_eval, best_moves
         else:
             min_eval = float("inf")
-            best_move = None
+            best_moves = []
 
-            for move in board.legal_moves:
+            for move in moves:
                 board.push(move)
                 eval, _ = self.minimax_search(board, depth - 1, True, alpha, beta)
                 board.pop()
 
                 if eval < min_eval:
                     min_eval = eval
-                    best_move = move
+                    best_moves = [move]
+                elif eval == min_eval:
+                    best_moves.append(move)
                 
                 beta = min(beta, min_eval)
                 if beta <= alpha:
                     break  # Alpha cutoff
 
-            return min_eval, best_move
+            return min_eval, best_moves
         
     def quiescence_search(
     self,
@@ -145,10 +149,15 @@ class MaterialMinimax(MinimaxAlphaBetaEvaluator):
 
     def evaluate_position(self, board):
         # Count the material in the position
+        if board.is_checkmate():
+            return float("-inf") if board.turn == chess.WHITE else float("inf")
+
         material_score = 0
         for piece_type in self.material_values:
             material_score += len(board.pieces(piece_type, chess.WHITE)) * self.material_values[piece_type]
             material_score -= len(board.pieces(piece_type, chess.BLACK)) * self.material_values[piece_type]
+
+
         return material_score
     
 class NeuralNetworkEvaluator(MinimaxAlphaBetaEvaluator):
@@ -169,3 +178,79 @@ class NeuralNetworkEvaluator(MinimaxAlphaBetaEvaluator):
             tensor = tensor.unsqueeze(0) if tensor.dim() == 4 else tensor  # Add batch dimension if needed
             evaluation = self.model(tensor)
             return evaluation.item()  # Convert from tensor to scalar
+        
+
+class HybridMaterialNeural(MinimaxAlphaBetaEvaluator):
+    def __init__(self, model, board_to_tensor, depth=2):
+        super().__init__(depth)
+        self.model = model
+        self.model.eval()  # Set model to evaluation mode
+        self.board_to_tensor = board_to_tensor
+        self.material_values = {
+            chess.PAWN: 100,
+            chess.KNIGHT: 320,
+            chess.BISHOP: 330,
+            chess.ROOK: 500,
+            chess.QUEEN: 900,
+            chess.KING: 0,
+        }
+    
+    def evaluate_position(self, board):
+        """Only used during minimax search - using material only"""
+        return self.material_evaluation(board)
+
+    def material_evaluation(self, board):
+        """Pure material evaluation"""
+        if board.is_checkmate():
+            return float("-inf") if board.turn == chess.WHITE else float("inf")
+
+        material_score = 0
+        for piece_type in self.material_values:
+            material_score += len(board.pieces(piece_type, chess.WHITE)) * self.material_values[piece_type]
+            material_score -= len(board.pieces(piece_type, chess.BLACK)) * self.material_values[piece_type]
+        
+        return material_score
+
+    def network_evaluation(self, board):
+        """Pure neural network evaluation"""
+        with torch.no_grad():
+            tensor = self.board_to_tensor(board)
+            tensor = tensor.unsqueeze(0) if tensor.dim() == 4 else tensor
+            neural_score = self.model(tensor).item()
+        
+        return neural_score
+    
+    def get_best_move(self, board):
+        """Two-stage evaluation: 
+        1. Run minimax with material evaluation to get top material moves
+        2. Choose the best move among these using neural evaluation
+        """
+        # First run minimax with material evaluation
+        _, material_best_moves = self.minimax_search(board, alpha=float("-inf"), depth=self.depth, beta=float("inf"))
+        
+        if not material_best_moves:
+            return None
+            
+        print(f"Top material moves with equal evaluation ({len(material_best_moves)}):")
+        for move in material_best_moves:
+            print(f"- {move}")
+            
+        # If only one move, no need for neural evaluation
+        if len(material_best_moves) == 1:
+            return material_best_moves[0]
+            
+        # Use neural network to evaluate the top material moves
+        best_move = None
+        best_score = float("-inf")
+        
+        for move in material_best_moves:
+            board.push(move)
+            neural_score = self.network_evaluation(board)
+            board.pop()
+            
+            if neural_score > best_score:
+                best_score = neural_score
+                best_move = move
+                
+        print(f"Best move selected by neural evaluation: {best_move}")
+        return best_move
