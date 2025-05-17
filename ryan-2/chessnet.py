@@ -6,6 +6,7 @@ import chess
 from typing import Tuple, Optional
 
 from helper.board_to_tensor import board_to_tensor_nnue
+from helper.clipped_relu import ClippedReLU
 
 
 class ChessNet(nn.Module):
@@ -144,3 +145,5 @@ if __name__ == "__main__":
     # Get best move with depth 3
     best_move = get_best_move(board, depth=3, evaluator=evaluator)
     print(f"Best move: {best_move}")
+
+
