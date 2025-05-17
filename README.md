@@ -1,5 +1,4 @@
-# CS4701 Project Spring 2025
-# Chess AI using minimax and neural networks 
+# CS4701 Project Spring 2025 : Chess AI using minimax and neural networks 
 
 # How to use:  
 Install stockfish '''brew install stockfish'''
