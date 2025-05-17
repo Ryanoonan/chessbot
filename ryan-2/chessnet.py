@@ -6,7 +6,6 @@ import chess
 from typing import Tuple, Optional
 
 from helper.board_to_tensor import board_to_tensor_nnue
-from helper.clipped_relu import ClippedReLU
 
 
 class ChessNet(nn.Module):
@@ -16,6 +15,7 @@ class ChessNet(nn.Module):
         super(ChessNet, self).__init__()
         # Fully connected layers
         self.relu = nn.ReLU()
+        self.dropout = nn.Dropout(p=0.1)  # Adding dropout with probability 0.1
         self.fc1w = nn.Linear(64*64*10, 256)
         self.fc1b = nn.Linear(64*64*10, 256)
         self.fc2 = nn.Linear(512, 32)
@@ -47,16 +47,20 @@ class ChessNet(nn.Module):
         # Concatenate the outputs
         x = torch.cat((x1, x2), dim=1)  # Concatenate along the feature dimension
         x = self.relu(x)
+        x = self.dropout(x)  # Apply dropout after first activation
 
         # Pass through the second and third layers
         x = self.fc2(x)
         x = self.relu(x)
+        x = self.dropout(x)  # Apply dropout after second activation
 
         x = self.fc3(x)
         x = self.relu(x)
+        x = self.dropout(x)  # Apply dropout after third activation
         x = self.fc4(x)  # Output: single evaluation score
 
         return x
+
 
 
 

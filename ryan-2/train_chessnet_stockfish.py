@@ -64,7 +64,6 @@ def train_model(
             optimizer.step()
 
             train_loss += loss.item()
-            print(f"Loss item: {loss.item():.4f}")
         train_loss /= len(train_loader)
 
         # Validation
